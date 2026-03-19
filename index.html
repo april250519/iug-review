@@ -1,11 +1,587 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Review 统计</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      background: #f5f7fb;
+      color: #222;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      font-size: 28px;
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 22px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 16px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 180px;
+    }
+
+    .field label {
+      font-size: 14px;
+      color: #444;
+    }
+
+    input[type="date"],
+    select,
+    textarea {
+      border: 1px solid #cfd7e6;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input[type="date"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #1677ff;
+      box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.12);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      background: #1677ff;
+      color: #fff;
+    }
+
+    button:hover {
+      background: #0f5fd1;
+    }
+
+    button.secondary {
+      background: #eef3ff;
+      color: #1f4fbf;
+    }
+
+    button.secondary:hover {
+      background: #dde8ff;
+    }
+
+    .tip {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.7;
+    }
+
+    .error {
+      margin-top: 12px;
+      color: #d93025;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+
+    .summary {
+      line-height: 1.9;
+      font-size: 15px;
+      margin-bottom: 16px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid #e3e8f2;
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1000px;
+      background: #fff;
+    }
+
+    th, td {
+      border-bottom: 1px solid #e8edf5;
+      padding: 12px 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f3f6fb;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:hover td {
+      background: #fafcff;
+    }
+
+    .muted {
+      color: #666;
+    }
+
+    .empty {
+      padding: 18px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: #eef3ff;
+      color: #1f4fbf;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 24px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      .field {
+        min-width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-    <h1>Hello World!</h1>
+  <div class="container">
+    <div class="card">
+      <h1>产品 Review 统计 <span class="badge">支持日期筛选 + Total 降序</span></h1>
+
+      <div class="controls">
+        <div class="field">
+          <label for="startDate">开始日期</label>
+          <input type="date" id="startDate" />
+        </div>
+
+        <div class="field">
+          <label for="endDate">结束日期</label>
+          <input type="date" id="endDate" />
+        </div>
+
+        <div class="field">
+          <label for="sortBy">排序方式</label>
+          <select id="sortBy">
+            <option value="total-desc">Total 降序</option>
+            <option value="total-asc">Total 升序</option>
+            <option value="satisfied-desc">Satisfied 数量降序</option>
+            <option value="unsatisfied-desc">Unsatisfied 数量降序</option>
+            <option value="neutral-desc">Neutral 数量降序</option>
+            <option value="satisfied-rate-desc">Satisfied % 降序</option>
+            <option value="unsatisfied-rate-desc">Unsatisfied % 降序</option>
+            <option value="neutral-rate-desc">Neutral % 降序</option>
+            <option value="product-asc">Product 升序</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="inputData">把 Excel / Google Sheets 的表格内容直接复制粘贴到这里</label>
+        <textarea id="inputData" placeholder="例如：
+Month	Date	Product	Rating
+202603	2026/3/3	218	Neutral
+202603	2026/3/3	RC318	Satisfied
+202603	2026/3/3	CK12	Neutral
+202603	2026/3/3	C82Aura	Unsatisfied"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button onclick="analyzeData()">开始统计</button>
+        <button class="secondary" onclick="clearAllData()">清空</button>
+        <button class="secondary" onclick="downloadCSV()">导出结果 CSV</button>
+      </div>
+
+      <div class="tip">
+        要求表头包含：<b>Product</b>、<b>Rating</b><br>
+        日期列建议命名为：<b>Date</b><br>
+        Rating 支持：<b>Satisfied</b>、<b>Unsatisfied</b>、<b>Neutral</b><br>
+        日期支持格式：<b>2026/3/3</b>、<b>2026-03-03</b>
+      </div>
+
+      <div id="error" class="error"></div>
+    </div>
+
+    <div class="card">
+      <h2>统计结果</h2>
+      <div id="summary" class="summary muted">还没有统计结果。</div>
+      <div id="result"></div>
+    </div>
+  </div>
+
+  <script>
+    let latestTableRows = [];
+
+    function analyzeData() {
+      const input = document.getElementById("inputData").value.trim();
+      const resultDiv = document.getElementById("result");
+      const summaryDiv = document.getElementById("summary");
+      const errorDiv = document.getElementById("error");
+      const sortBy = document.getElementById("sortBy").value;
+
+      const startDateVal = document.getElementById("startDate").value;
+      const endDateVal = document.getElementById("endDate").value;
+
+      const startDate = startDateVal ? new Date(startDateVal + "T00:00:00") : null;
+      const endDate = endDateVal ? new Date(endDateVal + "T23:59:59") : null;
+
+      resultDiv.innerHTML = "";
+      errorDiv.textContent = "";
+      latestTableRows = [];
+
+      if (!input) {
+        summaryDiv.innerHTML = "还没有统计结果。";
+        errorDiv.textContent = "请先粘贴表格数据。";
+        return;
+      }
+
+      if (startDate && endDate && startDate > endDate) {
+        summaryDiv.innerHTML = "还没有统计结果。";
+        errorDiv.textContent = "开始日期不能大于结束日期。";
+        return;
+      }
+
+      const lines = input.split(/\r?\n/).filter(line => line.trim() !== "");
+      if (lines.length < 2) {
+        summaryDiv.innerHTML = "还没有统计结果。";
+        errorDiv.textContent = "数据不足，至少需要表头和一行数据。";
+        return;
+      }
+
+      const rows = lines.map(line => line.split("\t"));
+      const headers = rows[0].map(h => String(h || "").trim().toLowerCase());
+
+      const productIndex = headers.findIndex(h => h === "product");
+      const ratingIndex = headers.findIndex(h => h === "rating");
+      const dateIndex = headers.findIndex(h => h === "date");
+
+      if (productIndex === -1 || ratingIndex === -1) {
+        summaryDiv.innerHTML = "还没有统计结果。";
+        errorDiv.textContent = "找不到 Product 或 Rating 列，请确认表头名称正确。";
+        return;
+      }
+
+      const stats = {};
+      let totalAll = 0;
+      let filteredRows = 0;
+      const overall = {
+        Satisfied: 0,
+        Unsatisfied: 0,
+        Neutral: 0
+      };
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const product = (row[productIndex] || "").trim();
+        const ratingRaw = (row[ratingIndex] || "").trim();
+        const dateStr = dateIndex !== -1 ? (row[dateIndex] || "").trim() : "";
+
+        if (!product || !ratingRaw) continue;
+
+        const rating = normalizeRating(ratingRaw);
+        if (!rating) continue;
+
+        const rowDate = parseDate(dateStr);
+
+        if (startDate || endDate) {
+          if (!dateIndex || dateIndex === -1) {
+            continue;
+          }
+          if (!rowDate) {
+            continue;
+          }
+          if (startDate && rowDate < startDate) continue;
+          if (endDate && rowDate > endDate) continue;
+        }
+
+        filteredRows++;
+
+        if (!stats[product]) {
+          stats[product] = {
+            total: 0,
+            Satisfied: 0,
+            Unsatisfied: 0,
+            Neutral: 0
+          };
+        }
+
+        stats[product][rating]++;
+        stats[product].total++;
+        overall[rating]++;
+        totalAll++;
+      }
+
+      if (filteredRows === 0) {
+        summaryDiv.innerHTML = "没有符合条件的数据。";
+        errorDiv.textContent = "没有识别到符合当前日期范围的数据，或 Rating 值不是 Satisfied / Unsatisfied / Neutral。";
+        resultDiv.innerHTML = '<div class="empty">暂无结果</div>';
+        return;
+      }
+
+      const sortedProducts = Object.keys(stats).sort((a, b) => {
+        const A = stats[a];
+        const B = stats[b];
+
+        switch (sortBy) {
+          case "total-asc":
+            return A.total - B.total;
+          case "satisfied-desc":
+            return B.Satisfied - A.Satisfied || B.total - A.total;
+          case "unsatisfied-desc":
+            return B.Unsatisfied - A.Unsatisfied || B.total - A.total;
+          case "neutral-desc":
+            return B.Neutral - A.Neutral || B.total - A.total;
+          case "satisfied-rate-desc":
+            return getRate(B.Satisfied, B.total) - getRate(A.Satisfied, A.total) || B.total - A.total;
+          case "unsatisfied-rate-desc":
+            return getRate(B.Unsatisfied, B.total) - getRate(A.Unsatisfied, A.total) || B.total - A.total;
+          case "neutral-rate-desc":
+            return getRate(B.Neutral, B.total) - getRate(A.Neutral, A.total) || B.total - A.total;
+          case "product-asc":
+            return a.localeCompare(b, "zh-Hans-CN");
+          case "total-desc":
+          default:
+            return B.total - A.total || a.localeCompare(b, "zh-Hans-CN");
+        }
+      });
+
+      let html = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Total</th>
+                <th>Satisfied</th>
+                <th>Satisfied %</th>
+                <th>Unsatisfied</th>
+                <th>Unsatisfied %</th>
+                <th>Neutral</th>
+                <th>Neutral %</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      sortedProducts.forEach(product => {
+        const item = stats[product];
+        const rowObj = {
+          product,
+          total: item.total,
+          satisfied: item.Satisfied,
+          satisfiedPct: calcPercent(item.Satisfied, item.total),
+          unsatisfied: item.Unsatisfied,
+          unsatisfiedPct: calcPercent(item.Unsatisfied, item.total),
+          neutral: item.Neutral,
+          neutralPct: calcPercent(item.Neutral, item.total)
+        };
+        latestTableRows.push(rowObj);
+
+        html += `
+          <tr>
+            <td>${escapeHtml(product)}</td>
+            <td>${item.total}</td>
+            <td>${item.Satisfied}</td>
+            <td>${calcPercent(item.Satisfied, item.total)}</td>
+            <td>${item.Unsatisfied}</td>
+            <td>${calcPercent(item.Unsatisfied, item.total)}</td>
+            <td>${item.Neutral}</td>
+            <td>${calcPercent(item.Neutral, item.total)}</td>
+          </tr>
+        `;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      const rangeText = buildRangeText(startDateVal, endDateVal);
+
+      summaryDiv.innerHTML = `
+        <b>总体统计：</b><br>
+        筛选日期：${rangeText}<br>
+        总 review 数：${totalAll}<br>
+        Satisfied：${overall.Satisfied} (${calcPercent(overall.Satisfied, totalAll)})<br>
+        Unsatisfied：${overall.Unsatisfied} (${calcPercent(overall.Unsatisfied, totalAll)})<br>
+        Neutral：${overall.Neutral} (${calcPercent(overall.Neutral, totalAll)})
+      `;
+
+      resultDiv.innerHTML = html;
+    }
+
+    function normalizeRating(value) {
+      const v = String(value).trim().toLowerCase();
+      if (v === "satisfied") return "Satisfied";
+      if (v === "unsatisfied") return "Unsatisfied";
+      if (v === "neutral") return "Neutral";
+      return null;
+    }
+
+    function parseDate(str) {
+      if (!str) return null;
+
+      const raw = String(str).trim();
+      if (!raw) return null;
+
+      const normalized = raw.replace(/\//g, "-");
+      const parts = normalized.split("-");
+      if (parts.length !== 3) return null;
+
+      const y = Number(parts[0]);
+      const m = Number(parts[1]);
+      const d = Number(parts[2]);
+
+      if (!y || !m || !d) return null;
+
+      const date = new Date(y, m - 1, d, 12, 0, 0);
+      return isNaN(date.getTime()) ? null : date;
+    }
+
+    function calcPercent(part, total) {
+      if (!total) return "0.00%";
+      return ((part / total) * 100).toFixed(2) + "%";
+    }
+
+    function getRate(part, total) {
+      if (!total) return 0;
+      return (part / total) * 100;
+    }
+
+    function buildRangeText(startDateVal, endDateVal) {
+      if (startDateVal && endDateVal) return `${startDateVal} ~ ${endDateVal}`;
+      if (startDateVal) return `${startDateVal} 之后`;
+      if (endDateVal) return `${endDateVal} 之前`;
+      return "全部日期";
+    }
+
+    function clearAllData() {
+      document.getElementById("inputData").value = "";
+      document.getElementById("startDate").value = "";
+      document.getElementById("endDate").value = "";
+      document.getElementById("sortBy").value = "total-desc";
+      document.getElementById("error").textContent = "";
+      document.getElementById("summary").innerHTML = "还没有统计结果。";
+      document.getElementById("result").innerHTML = "";
+      latestTableRows = [];
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function downloadCSV() {
+      if (!latestTableRows.length) {
+        alert("请先生成统计结果，再导出 CSV。");
+        return;
+      }
+
+      const header = [
+        "Product",
+        "Total",
+        "Satisfied",
+        "Satisfied %",
+        "Unsatisfied",
+        "Unsatisfied %",
+        "Neutral",
+        "Neutral %"
+      ];
+
+      const rows = latestTableRows.map(item => [
+        csvEscape(item.product),
+        item.total,
+        item.satisfied,
+        item.satisfiedPct,
+        item.unsatisfied,
+        item.unsatisfiedPct,
+        item.neutral,
+        item.neutralPct
+      ]);
+
+      const csv = [header, ...rows].map(row => row.join(",")).join("\n");
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "product_review_stats.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function csvEscape(value) {
+      const str = String(value ?? "");
+      if (/[",\n]/.test(str)) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    }
+  </script>
 </body>
 </html>
